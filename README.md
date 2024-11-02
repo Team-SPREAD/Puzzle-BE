@@ -1,3 +1,4 @@
+
 <p align="middle">
   <img width="200" alt="PUZZLE 썸네일" src="https://github.com/user-attachments/assets/4c5c1b24-499a-4f53-9861-bdc4f2c9b0ca">
 
@@ -77,4 +78,3 @@
 **팀 프로젝트 지원**: 프로젝트 기획 단계에서 효율적인 팀워크와 아이디어 도출을 돕는 모든 팀 프로젝트에서 활용 가능합니다.
 
 <br/>
-
