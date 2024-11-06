@@ -39,10 +39,9 @@ jobs:
       - name: ssh connect & production
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }} #해당 부북이 오류가 있음
-          port: ${{ secrets.PORT }}
+          host: ${{ secrets.DEVELOP_EC2_IP }}
+          key: ${{ secrets.DEVELOP_EC2_SSH_KEY }}
           script: |
             cd server
             docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }}
