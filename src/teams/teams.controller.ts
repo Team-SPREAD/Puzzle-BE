@@ -1,5 +1,5 @@
 // src/teams/team.controller.ts
-import { Controller, Get, Post, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Req, UseGuards, Param } from '@nestjs/common'; // Param 추가
 import { TeamDto } from './teams.dto';
 import { Team } from './teams.schema';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,5 +23,10 @@ export class TeamController {
   async getMyTeams(@Req() req: Request): Promise<Team[]> {
     const userId = req.user['id'];
     return this.teamService.findTeamsByUserId(userId);
+  }
+
+  @Get(':id/users')
+  async getTeamUsers(@Param('id') teamId: string) {
+    return this.teamService.getTeamUsers(teamId);
   }
 }

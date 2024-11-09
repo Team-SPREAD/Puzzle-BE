@@ -1,3 +1,4 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -6,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './google-oauth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TeamModule } from './teams/teams.module';
+import { InvitationModule } from './invitations/invitations.module'; // InvitationModule 추가
 
 @Module({
   imports: [
@@ -14,6 +16,7 @@ import { TeamModule } from './teams/teams.module';
     AuthModule, 
     UsersModule,
     TeamModule, 
+    InvitationModule, 
   ],
   controllers: [AppController],
   providers: [AppService],
