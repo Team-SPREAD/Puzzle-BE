@@ -35,7 +35,27 @@ export class InvitationService {
       to: invitedEmail,
       subject: 'Team Invitation',
       text: `You have been invited to join a team. Click the link to accept: ${inviteLink}`,
-      html: `<p>You have been invited to join a team.</p><p><a href="${inviteLink}">Accept Invitation</a></p>`,
+      html: `
+  <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; color: #333; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+    <div style="background-color: #f4f4f4; padding: 20px; text-align: center;">
+      <img src="https://private-user-images.githubusercontent.com/114386406/382481320-4c5c1b24-499a-4f53-9861-bdc4f2c9b0ca.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzExOTAyOTUsIm5iZiI6MTczMTE4OTk5NSwicGF0aCI6Ii8xMTQzODY0MDYvMzgyNDgxMzIwLTRjNWMxYjI0LTQ5OWEtNGY1My05ODYxLWJkYzRmMmM5YjBjYS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQxMTA5JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MTEwOVQyMjA2MzVaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT02OWFjZDJiZmRkOTI4NDc0NWNmYjE4ZjhkOWJiYjM4MzNhZGU5MmJmNDdhYzk4OTMwMjQ2ZTE0OGM5NTM1ODI4JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.YNG--9XH6QoFWUo0WeNFOEOCDFsJauVIOwInmk01ZFY" alt="Service Logo" style="width: 360px; height: auto;">
+      <h2 style="color: #007bff; margin-top: 20px;">You've been invited to join our team!</h2>
+    </div>
+    <div style="padding: 20px;">
+      <p>Hi there!</p>
+      <p>We're excited to invite you to join our team. This invitation allows you to collaborate with us and be part of something amazing.</p>
+      <p>To accept the invitation and join our team, please click the button below:</p>
+      <div style="text-align: center; margin: 20px;">
+        <a href="${inviteLink}" style="background-color: #007bff; color: #ffffff; padding: 10px 20px; text-decoration: none; font-weight: bold; border-radius: 5px; display: inline-block;">Accept Invitation</a>
+      </div>
+      <p>If the button above doesn’t work, please copy and paste the following URL into your browser:</p>
+      <p style="word-break: break-all;"><a href="${inviteLink}">${inviteLink}</a></p>
+      <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+      <p style="font-size: 12px; color: #888;">If you have any questions, please contact us at https://spread-puzzle.io.</p>
+    </div>
+  </div>
+`,
+
     });
 
     return invitation;
