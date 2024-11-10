@@ -1,16 +1,20 @@
-import { Controller, Get, Post, Body, Param, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport'; // AuthGuard import 추가
-import { UserService } from './users.service'; // UserService의 정확한 경로로 수정
+// src/users/user.controller.ts
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'; // 추가
+import { UserService } from './users.service';
 
+@ApiTags('User') // API 태그 추가
+@ApiBearerAuth()
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get('me')
-  @UseGuards(AuthGuard('jwt')) // JWT 인증 가드 추가
+  @Get()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: '사용자 정보 조회', description: '현재 로그인된 사용자의 정보를 조회합니다.' }) // 설명 추가
   async getUserInfo(@Req() req) {
-    const userId = req.user.id; // 로그인된 사용자 ID
+    const userId = req.user.id;
     return this.userService.getUserInfo(userId);
   }
-
 }

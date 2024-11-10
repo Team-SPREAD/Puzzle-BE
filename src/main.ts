@@ -6,16 +6,22 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('Swagger Example')
-    .setDescription('Swagger study API description')
+    .setTitle('Puzzle API 명세서')
+    .setDescription('API 명세서')
     .setVersion('1.0.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      { 
+        type: 'http', 
+        scheme: 'bearer', 
+        bearerFormat: 'JWT',
+        in: 'header',
+        description: '토큰만 넣어 주세요 "Bearer "제외하고 기입하기!' // 설명 추가
+      },
+    )
     .addTag('swagger')
     .build();
 
-  // config를 바탕으로 swagger document 생성
   const document = SwaggerModule.createDocument(app, config);
-  // Swagger UI에 대한 path를 연결함
   SwaggerModule.setup('api', app, document);
 
   // CORS 설정
