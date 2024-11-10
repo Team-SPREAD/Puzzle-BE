@@ -30,7 +30,7 @@ export class AuthService {
       const googlePayload = { email, firstName, lastName, avatar, userId: findUser._id };
       const googleJwt = {
         token: this.jwtService.sign(googlePayload, {
-          secret: process.env.JWT_KEY,
+          secret: process.env.JWT_SECRET,
           expiresIn: process.env.JWT_EXPIRES,
         }),
       };
