@@ -1,6 +1,6 @@
+// src/boards/boards.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Team } from '../teams/teams.schema';
 
 @Schema()
 export class Board extends Document {
@@ -11,7 +11,7 @@ export class Board extends Document {
   description: string;
   
   @Prop()
-  boardImgUrl: string;
+  boardImgUrl: string; 
 
   @Prop()
   currentStep: string;
@@ -22,8 +22,7 @@ export class Board extends Document {
   @Prop({ default: Date.now })
   updatedDate: Date;
 
-  @Prop({ type: Types.ObjectId, ref: 'Team' }) // Team 모델을 참조하도록 설정
+  @Prop({ type: Types.ObjectId, ref: 'Team' })
   team: Types.ObjectId;
 }
-
-export const TeamSchema = SchemaFactory.createForClass(Team);
+export const BoardSchema = SchemaFactory.createForClass(Board);
