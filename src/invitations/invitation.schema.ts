@@ -8,6 +8,9 @@ export class Invitation extends Document {
   teamId: Types.ObjectId;
 
   @Prop({ required: true })
+  sender: string;
+
+  @Prop({ required: true })
   invitedEmail: string;
 
   @Prop({ required: true, default: 'pending' })

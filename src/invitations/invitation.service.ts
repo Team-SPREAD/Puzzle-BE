@@ -14,10 +14,11 @@ export class InvitationService {
   ) {}
 
   // 초대 생성 및 이메일 전송
-  async inviteToTeam(teamId: string, invitedEmail: string): Promise<Invitation> {
+  async inviteToTeam(teamId: string, invitedEmail: string, sender: string): Promise<Invitation> {
     const invitation = new this.invitationModel({
       teamId: new Types.ObjectId(teamId),
       invitedEmail,
+      sender,
     });
     await invitation.save();
 
