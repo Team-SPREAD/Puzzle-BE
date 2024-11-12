@@ -39,14 +39,32 @@ export class TeamService {
   async getTeamUsers(teamId: string): Promise<User[]> {
     // 팀 조회
     const team = await this.teamModel.findById(teamId).exec();
+    if (!team) {
+      throw new NotFoundException('팀을 찾을 수 없습니다.');
+    }
+    // users 배열의 ObjectId에 해당하는 모든 사용자 정보를 조회
+    const users = await this.userModel.find({ _id: { $in: team.users } }).exec();
+    return users;
+  }
 
+  async updateTeamName(teamId: string, teamName: string): Promise<Team> {
+    const team = await this.teamModel.findByIdAndUpdate(
+      teamId,
+      { teamName, updatedDate: new Date() },
+      { new: true },
+    );
     if (!team) {
       throw new NotFoundException('Team not found');
     }
-
-    // users 배열의 ObjectId에 해당하는 모든 사용자 정보를 조회
-    const users = await this.userModel.find({ _id: { $in: team.users } }).exec();
-
-    return users;
+    return team;
   }
+
+  async deleteTeam(teamId: string): Promise<void> {
+    const result = await this.teamModel.findByIdAndDelete(teamId).exec();
+    if (!result) {
+      throw new NotFoundException('Team not found');
+    }
+  }
+
+
 }
