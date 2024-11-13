@@ -40,7 +40,7 @@ async inviteToTeam(
 
 
   @Post('acceptance/:id')
-  //@UseGuards(AuthGuard('jwt')) 일단 안 막음
+  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
     summary: '초대 수락',
     description: '사용자가 팀 초대를 수락합니다.',

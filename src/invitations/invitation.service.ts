@@ -21,23 +21,29 @@ export class InvitationService {
         pass: process.env.EMAIL_PASS,
       },
     });
-
+  
     // 팀 이름 조회
     const team = await this.teamService.findTeamById(teamId);
     const teamName = team?.teamName || '팀';
-
+  
     const results = await Promise.all(
       invitedEmails.map(async (email) => {
+        // 각 이메일에 대해 초대 생성
         const invitation = new this.invitationModel({
           teamId: new Types.ObjectId(teamId),
           invitedEmail: email,
           sender,
         });
-        await invitation.save();
-
-        const inviteLink = `http://localhost:3000/invitations/accept/${invitation._id}/${encodeURIComponent(sender)}/${encodeURIComponent(teamName)}`;
-
+  
         try {
+          // 초대 정보 저장
+          await invitation.save();
+          console.log(`Invitation saved for ${email}`); // 저장 성공 로그
+  
+          // 초대 링크 생성
+          const inviteLink = `http://localhost:3000/invitations/accept/${invitation._id}/${encodeURIComponent(sender)}/${encodeURIComponent(teamName)}`;
+  
+          // 이메일 전송
           await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: email,
@@ -109,15 +115,18 @@ export class InvitationService {
                 </div>
               </div>`
           });
+  
           return { email, status: '메일 전송 성공' };
         } catch (error) {
+          console.error(`Failed to send invitation to ${email}:`, error.message);
           return { email, status: '메일 전송 실패', error: error.message };
         }
       })
     );
-
+  
     return results;
   }
+  
 
   // 초대 수락
   async acceptInvite(invitationId: string, userId: string): Promise<string> {
