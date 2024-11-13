@@ -12,28 +12,30 @@ export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({
-    summary: '팀 초대',
-    description: '특정 사용자를 팀에 초대합니다. <br>초대하려는 사용자의 이메일, 팀ID, 송신자의 이름을 입력하세요.<br>(JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)',
-  })
-  @ApiBody({
-    description: '초대 생성 데이터',
-    required: true,
-    schema: {
-      properties: {
-        email: { type: 'string', example: 'user@example.com', description: '초대할 사용자의 이메일 주소' },
-        teamId: { type: 'string', example: '60d9f6f10c1a1b2f7c3d9a20', description: '초대를 보낼 팀의 ID' },
-        sender: { type: 'string', example: '홍길동', description: '송신자' },
-      },
+@UseGuards(AuthGuard('jwt'))
+@ApiOperation({
+  summary: '팀 초대',
+  description: '여러 사용자를 팀에 초대합니다. <br>초대하려는 사용자의 이메일 목록, 팀ID, 송신자의 이름을 입력하세요.<br>(JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)',
+})
+@ApiBody({
+  description: '초대 생성 데이터',
+  required: true,
+  schema: {
+    properties: {
+      emails: { type: 'array', items: { type: 'string' }, example: ['user1@example.com', 'user2@example.com'], description: '초대할 사용자의 이메일 주소 목록' },
+      teamId: { type: 'string', example: '60d9f6f10c1a1b2f7c3d9a20', description: '초대를 보낼 팀의 ID' },
+      sender: { type: 'string', example: '홍길동', description: '송신자' },
     },
-  })
-  @ApiResponse({ status: 201, description: '이메일 발송 완료', schema: { example: { message: '이메일 발송 성공!' } }})
-  async inviteToTeam(@Req() req: Request, @Body() { email, teamId, sender }: { email: string; teamId: string; sender: string}) {
-    await this.invitationService.inviteToTeam(teamId, email, sender);
-    
-    return { message: '이메일 발송 성공!' };
-  }
+  },
+})
+@ApiResponse({ status: 201, description: '이메일 발송 완료', schema: { example: { message: '이메일 발송 성공!' } }})
+async inviteToTeam(
+  @Req() req: Request,
+  @Body() { emails, teamId, sender }: { emails: string[]; teamId: string; sender: string }
+) {
+  const results = await this.invitationService.inviteToMultipleUsers(teamId, emails, sender);
+  return { message: '이메일 발송 성공!', results };
+}
 
 
   @Post('acceptance/:id')

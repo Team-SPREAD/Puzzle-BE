@@ -6,7 +6,6 @@ import { Team } from './teams.schema';
 import { TeamDto } from './teams.dto';
 import { User } from 'src/users/users.schema';
 
-
 @Injectable()
 export class TeamService {
   constructor(
@@ -37,12 +36,10 @@ export class TeamService {
   }
 
   async getTeamUsers(teamId: string): Promise<User[]> {
-    // 팀 조회
     const team = await this.teamModel.findById(teamId).exec();
     if (!team) {
       throw new NotFoundException('팀을 찾을 수 없습니다.');
     }
-    // users 배열의 ObjectId에 해당하는 모든 사용자 정보를 조회
     const users = await this.userModel.find({ _id: { $in: team.users } }).exec();
     return users;
   }
@@ -66,5 +63,12 @@ export class TeamService {
     }
   }
 
-
+  // teamId로 팀을 조회하는 메서드 추가
+  async findTeamById(teamId: string): Promise<Team> {
+    const team = await this.teamModel.findById(teamId).exec();
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+    return team;
+  }
 }
