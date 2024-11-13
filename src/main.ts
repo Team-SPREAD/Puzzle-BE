@@ -15,7 +15,7 @@ async function bootstrap() {
         scheme: 'bearer', 
         bearerFormat: 'JWT',
         in: 'header',
-        description: '토큰만 넣어 주세요 "Bearer "제외하고 기입하기!' // 설명 추가
+        description: '토큰만 넣어 주세요 "Bearer "제외하고 기입하기!' // 설명 추가
       },
     )
     .addTag('swagger')
