@@ -31,10 +31,6 @@ export class BoardDto {
   })
   readonly teamId: string;
   
-  @ApiProperty({
-    description: 'S3에 저장된 보드 이미지의 URL (자동 생성, 요청 시 필요 없음!!!)',
-    example: 'https://your-s3-bucket.s3.amazonaws.com/puzzle-board-images/your-image.png',
-    required: false,
-  })
+  
   readonly boardImgUrl?: string;
 }

@@ -1,4 +1,3 @@
-// src/boards/boards.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
@@ -11,9 +10,9 @@ export class Board extends Document {
   description: string;
   
   @Prop()
-  boardImgUrl: string; 
+  boardImgUrl: string;
 
-  @Prop()
+  @Prop({ default: '1' })
   currentStep: string;
 
   @Prop({ default: Date.now })
@@ -24,5 +23,9 @@ export class Board extends Document {
 
   @Prop({ type: Types.ObjectId, ref: 'Team' })
   team: Types.ObjectId;
+
+  @Prop({ default: false }) 
+  like: boolean;
 }
+
 export const BoardSchema = SchemaFactory.createForClass(Board);
