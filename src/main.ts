@@ -8,18 +8,16 @@ async function bootstrap() {
 
   // Swagger 설정
   const config = new DocumentBuilder()
-    .setTitle('Puzzle API 명세서')
-    .setDescription('Puzzle 서비스의 API 명세서입니다. 각 요청에 필요한 JWT 토큰을 헤더에 포함해야 합니다.')
+    .setTitle('Puzzle API Documentation')
+    .setDescription('Puzzle service API documentation. Include the required JWT token in the header for each request.')
     .setVersion('1.0.0')
-    .addBearerAuth(
-      { 
-        type: 'http', 
-        scheme: 'bearer', 
-        bearerFormat: 'JWT',
-        in: 'header',
-        description: 'JWT 토큰만 입력해주세요. "Bearer " 접두사는 제외하고 토큰만 넣습니다.'
-      }
-    )
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      in: 'header',
+      description: 'Enter only the JWT token. Do not include the "Bearer " prefix.',
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -30,11 +28,17 @@ async function bootstrap() {
 
   // CORS 설정
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://your-production-domain.com'], // 접근을 허용할 도메인 설정
-    credentials: true, // 쿠키와 함께 요청을 허용
+    origin: [
+      'http://localhost:3000', // 로컬 개발 환경
+      'http://127.0.0.1:5500', // 배포 환경
+    ],
+    credentials: true, // 쿠키 및 인증 헤더 포함 허용
   });
 
-  await app.listen(3000);
+  // 포트 출력 로그 추가
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`Application is running on: http://localhost:${port}`);
 }
 
 bootstrap();
