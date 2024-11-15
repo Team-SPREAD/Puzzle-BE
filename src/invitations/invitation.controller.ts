@@ -60,6 +60,7 @@ async inviteToTeam(
   }
 
 
+
   @Get('redirection/:id/:sender/:teamName')
   @ApiOperation({
     summary: '초대 수락 링크',
