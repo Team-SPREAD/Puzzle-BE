@@ -29,6 +29,10 @@ export class BoardService {
     return this.boardModel.find({ team: new Types.ObjectId(teamId) }).exec();
   }
 
+  async findBoardById(boardId: string): Promise<Board | null> {
+    return this.boardModel.findById(boardId).exec();
+  }
+
   async updateBoard(
     boardId: string,
     updateData: Partial<BoardDto & { boardImgUrl?: string }>
@@ -38,7 +42,6 @@ export class BoardService {
       updatedDate: new Date(),
     };
 
-    // `boardImgUrl`이 undefined가 아닌 경우에만 업데이트 필드에 추가
     if (updateData.boardImgUrl !== undefined) {
       updateFields.boardImgUrl = updateData.boardImgUrl;
     }
@@ -91,6 +94,5 @@ export class BoardService {
       throw new NotFoundException('보드를 찾을 수 없습니다.');
     }
   }
-
 }
 

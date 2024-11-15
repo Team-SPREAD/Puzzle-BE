@@ -1,20 +1,25 @@
 import { Request } from 'express';
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Req, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BoardService } from './boards.service';
 import { BoardDto } from './boards.dto';
 import { S3Service } from '../aws/s3/s3.service';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse, ApiParam, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Team } from 'src/teams/teams.schema';
+import axios from 'axios';
+import { TeamService } from 'src/teams/teams.service';
+import { Types } from 'mongoose';
 
 @ApiTags('Boards')
-//@ApiBearerAuth()
+@ApiBearerAuth()
 //@UseGuards(AuthGuard('jwt'))
 @Controller('api/board')
 export class BoardController {
   constructor(
     private readonly boardService: BoardService,
-    private readonly s3Service: S3Service
+    private readonly s3Service: S3Service,
+    private readonly teamService: TeamService, // TeamService 주입
   ) {}
 
   @Post()
@@ -233,6 +238,139 @@ async updateCurrentStep(
 
   await this.boardService.updateCurrentStep(boardId, parsedStep);
   return { message: 'currentStep 업데이트 완료!' };
+}
+
+
+@Post('/token')
+@UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth() // Swagger에 JWT 인증 표시
+@ApiOperation({
+  summary: 'Liveblocks 방 토큰 발급',
+  description: '방 ID(roomId)를 기반으로 사용자가 방에 대한 권한이 있는지 확인하고, Liveblocks 방에 접속할 수 있는 토큰을 발급합니다.<br>(JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)',
+})
+@ApiBody({
+  description: '방 토큰 발급 요청 데이터',
+  schema: {
+    type: 'object',
+    properties: {
+      roomId: {
+        type: 'string',
+        description: '방의 고유 ID',
+        example: 'room-123',
+      },
+    },
+    required: ['roomId'],
+  },
+})
+@ApiResponse({
+  status: 201,
+  description: '토큰 발급 성공',
+  schema: {
+    example: {
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    },
+  },
+})
+@ApiResponse({
+  status: 400,
+  description: '유효하지 않은 요청 데이터 (roomId 누락)',
+  schema: {
+    example: {
+      statusCode: 400,
+      message: 'roomId는 필수입니다.',
+    },
+  },
+})
+@ApiResponse({
+  status: 401,
+  description: '인증 실패 또는 권한 없음',
+  schema: {
+    example: {
+      statusCode: 401,
+      message: '사용자 인증이 필요합니다.',
+    },
+  },
+})
+@ApiResponse({
+  status: 404,
+  description: '방 또는 팀을 찾을 수 없음',
+  schema: {
+    example: {
+      statusCode: 404,
+      message: '해당 방을 찾을 수 없습니다.',
+    },
+  },
+})
+@ApiResponse({
+  status: 500,
+  description: '내부 서버 오류',
+  schema: {
+    example: {
+      statusCode: 500,
+      message: 'Internal server error',
+    },
+  },
+})
+@Post('/token')
+@UseGuards(AuthGuard('jwt'))
+async generateRoomToken(@Body('roomId') roomId: string, @Req() req) {
+  // 1. roomId 검증
+  if (!roomId) {
+    throw new BadRequestException('roomId는 필수입니다.');
+  }
+  if (!Types.ObjectId.isValid(roomId)) {
+    throw new BadRequestException('유효하지 않은 roomId 형식입니다.');
+  }
+
+  const userId = req.user.id;
+  if (!userId) {
+    throw new UnauthorizedException('사용자 인증이 필요합니다.');
+  }
+
+  // 2. roomId로 보드 찾기
+  const board = await this.boardService.findBoardById(roomId);
+  if (!board) {
+    throw new NotFoundException('해당 방을 찾을 수 없습니다.');
+  }
+
+  // 3. 팀 정보 가져오기
+  const team = await this.teamService.findTeamById(board.team.toString());
+  if (!team) {
+    throw new NotFoundException('해당 보드와 연결된 팀을 찾을 수 없습니다.');
+  }
+
+  // 4. 사용자가 팀에 속해 있는지 확인
+  const isUserInTeam = team.users.some(user => user.toString() === userId);
+  if (!isUserInTeam) {
+    throw new UnauthorizedException('해당 방에 대한 권한이 없습니다.');
+  }
+
+  // 5. Liveblocks API 호출
+  const secretKey = process.env.LIVEBLOCKS_SECRET_KEY;
+  const apiUrl = 'https://api.liveblocks.io/v2/authorize-user';
+
+  const response = await axios.post(
+    apiUrl,
+    {
+      userId,
+      userInfo: {
+        name: req.user.firstName + ' ' + req.user.lastName,
+        avatar: req.user.avatar,
+      },
+      permissions: {
+        [roomId]: ['room:write'],
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+
+  // 6. 응답 반환
+  return { token: response.data.token };
 }
 
 
