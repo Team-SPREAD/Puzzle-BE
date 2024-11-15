@@ -40,7 +40,7 @@ async inviteToTeam(
 
 
   @Post('acceptance/:id')
-  @UseGuards(AuthGuard('jwt')) 
+  //@UseGuards(AuthGuard('jwt')) 일단 안 막음
   @ApiOperation({
     summary: '초대 수락',
     description: '사용자가 팀 초대를 수락합니다.',
@@ -59,52 +59,31 @@ async inviteToTeam(
     return { message: '초대 수락 성공!' };
   }
 
+  @Get('redirection/:id')
+@ApiOperation({
+  summary: '초대 수락 링크',
+  description: '사용자가 이메일 초대 링크를 클릭하면 초대를 수락하는 페이지로 리디렉션합니다.<br>예시) :http://localhost:3000/invitation/accept/초대ID/송신자ID/팀이름<br>useRouter 훅을 사용해 invitationId, sender, teamName을 가져올 수 있습니다.',
+})
+@ApiParam({
+  name: 'id',
+  required: true,
+  description: '초대 ID를 파라미터 값으로 넘겨주세요.',
+  example: '60d9f6f10c1a1b2f7c3d9a20',
+})
+@ApiResponse({ status: 302, description: '초대 수락 페이지로 리디렉션' })
+@ApiResponse({ status: 404, description: '초대를 찾을 수 없습니다. 오류 페이지로 리디렉션합니다.' })
+async handleGetAcceptInvite(@Param('id') invitationId: string, @Res() res: Response) {
+  const invitation = await this.invitationService.findInvitationById(invitationId);
 
-
-  @Get('redirection/:id/:sender/:teamName')
-  @ApiOperation({
-    summary: '초대 수락 링크',
-    description: '사용자가 이메일 초대 링크를 클릭하면 초대를 수락하는 페이지로 리디렉션합니다.',
-  })
-  @ApiParam({
-    name: 'id',
-    required: true,
-    description: '초대 ID를 파라미터 값으로 넘겨주세요.',
-    example: '60d9f6f10c1a1b2f7c3d9a20',
-  })
-  @ApiParam({
-    name: 'sender',
-    required: true,
-    description: '송신자의 이름을 포함합니다.',
-    example: '김철수',
-  })
-  @ApiParam({
-    name: 'teamName',
-    required: true,
-    description: '팀 이름을 포함합니다.',
-    example: '바나나',
-  })
-  @ApiResponse({ status: 302, description: '초대 수락 페이지로 리디렉션' })
-  @ApiResponse({ status: 404, description: '초대를 찾을 수 없습니다. 오류 페이지로 리디렉션합니다.' })
-  async handleGetAcceptInvite(
-    @Param('id') invitationId: string,
-    @Param('sender') sender: string,
-    @Param('teamName') teamName: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
-    const invitation = await this.invitationService.findInvitationById(invitationId);
-  
-    if (!invitation) {
-      return res.redirect(`/error?message=Invitation not found`);
-    }
-  
-    // 로그인 확인
-    if (!req.user) {
-      const redirectUrl = `http://kim-sun-woo.com/invitation/accept/${invitationId}/${encodeURIComponent(sender)}/${encodeURIComponent(teamName)}`;
-      return res.redirect(`http://kim-sun-woo.com:3000/auth/google?redirectUrl=${encodeURIComponent(redirectUrl)}`);
-    }
-  
-    return res.redirect(`/invitation/accept/${invitationId}/${encodeURIComponent(sender)}/${encodeURIComponent(teamName)}`);
+  if (!invitation) {
+    return res.redirect(`http://localhost:3000/error?message=Invitation not found`);
   }
+
+  // 팀과 송신자 이름을 로그로 확인
+  console.log("Sender:", invitation.sender);
+  const team = await this.invitationService.getTeamName(invitation.teamId);
+  console.log("Team Name:", team.teamName);
+
+  return res.redirect(`http://localhost:3000/invitation/accept/${invitationId}/${encodeURIComponent(invitation.sender)}/${encodeURIComponent(team.teamName)}`);
+}
 }
