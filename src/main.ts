@@ -1,32 +1,44 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Swagger 설정
   const config = new DocumentBuilder()
-    .setTitle('Puzzle API 명세서')
-    .setDescription('API 명세서')
+    .setTitle('Puzzle API Documentation')
+    .setDescription('Puzzle service API documentation. Include the required JWT token in the header for each request.')
     .setVersion('1.0.0')
-    .addBearerAuth(
-      { 
-        type: 'http', 
-        scheme: 'bearer', 
-        bearerFormat: 'JWT',
-        in: 'header',
-        description: '토큰만 넣어 주세요 "Bearer "제외하고 기입하기!' // 설명 추가
-      },
-    )
-    .addTag('swagger')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      in: 'header',
+      description: 'Enter only the JWT token. Do not include the "Bearer " prefix.',
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // CORS 설정
-  app.enableCors();
+  // 쿠키 파서 미들웨어 추가
+  app.use(cookieParser());
 
-  await app.listen(3000);
+  // CORS 설정
+  app.enableCors({
+    origin: [
+      'http://localhost:3000', // 로컬 개발 환경
+      'http://127.0.0.1:5500', // 배포 환경
+    ],
+    credentials: true, // 쿠키 및 인증 헤더 포함 허용
+  });
+
+  // 포트 출력 로그 추가
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`Application is running on: http://localhost:${port}`);
 }
+
 bootstrap();
