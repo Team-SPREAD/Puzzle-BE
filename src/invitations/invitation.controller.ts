@@ -60,8 +60,8 @@ async inviteToTeam(
   }
 
 
-  @Get('redirection/:id')
-  @UseGuards(AuthGuard('jwt')) 
+
+  @Get('redirection/:id/:sender/:teamName')
   @ApiOperation({
     summary: '초대 수락 링크',
     description: '사용자가 이메일 초대 링크를 클릭하면 초대를 수락하는 페이지로 리디렉션합니다.',
@@ -72,23 +72,39 @@ async inviteToTeam(
     description: '초대 ID를 파라미터 값으로 넘겨주세요.',
     example: '60d9f6f10c1a1b2f7c3d9a20',
   })
+  @ApiParam({
+    name: 'sender',
+    required: true,
+    description: '송신자의 이름을 포함합니다.',
+    example: '김철수',
+  })
+  @ApiParam({
+    name: 'teamName',
+    required: true,
+    description: '팀 이름을 포함합니다.',
+    example: '바나나',
+  })
   @ApiResponse({ status: 302, description: '초대 수락 페이지로 리디렉션' })
   @ApiResponse({ status: 404, description: '초대를 찾을 수 없습니다. 오류 페이지로 리디렉션합니다.' })
-  async handleGetAcceptInvite(@Param('id') invitationId: string, @Req() req: Request, @Res() res: Response) {
+  async handleGetAcceptInvite(
+    @Param('id') invitationId: string,
+    @Param('sender') sender: string,
+    @Param('teamName') teamName: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const invitation = await this.invitationService.findInvitationById(invitationId);
-
+  
     if (!invitation) {
-      return res.redirect(`http://localhost:3000/error?message=Invitation not found`);
+      return res.redirect(`/error?message=Invitation not found`);
     }
-
+  
     // 로그인 확인
     if (!req.user) {
-      // 로그인 페이지로 리다이렉트하며 초대 ID를 전달
-      return res.redirect(`http://localhost:3000/auth/google?invitationId=${invitationId}`);
+      const redirectUrl = `http://kim-sun-woo.com/invitation/accept/${invitationId}/${encodeURIComponent(sender)}/${encodeURIComponent(teamName)}`;
+      return res.redirect(`http://kim-sun-woo.com:3000/auth/google?redirectUrl=${encodeURIComponent(redirectUrl)}`);
     }
-
-    // 로그인된 사용자는 초대 수락 페이지로 이동
-    const team = await this.invitationService.getTeamName(invitation.teamId);
-    return res.redirect(`http://localhost:3000/invitation/accept/${invitationId}/${encodeURIComponent(invitation.sender)}/${encodeURIComponent(team.teamName)}`);
+  
+    return res.redirect(`/invitation/accept/${invitationId}/${encodeURIComponent(sender)}/${encodeURIComponent(teamName)}`);
   }
 }

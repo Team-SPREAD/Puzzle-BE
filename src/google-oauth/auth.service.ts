@@ -37,7 +37,6 @@ async googleLogin(req: GoogleRequest, res: Response, redirectUrl?: string) {
       }),
     };
 
-    // `redirectUrl`이 있으면 해당 URL로 리다이렉트, 없으면 기본적으로 대시보드로 리다이렉트
     const finalRedirectUrl = redirectUrl 
       ? `${redirectUrl}?token=${googleJwt.token}`
       : `http://localhost:3000/dashboard/?token=${googleJwt.token}`;
@@ -48,6 +47,7 @@ async googleLogin(req: GoogleRequest, res: Response, redirectUrl?: string) {
     throw new UnauthorizedException("로그인 실패");
   }
 }
+
 
 
 
