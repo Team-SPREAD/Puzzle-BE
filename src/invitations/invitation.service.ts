@@ -35,7 +35,7 @@ export class InvitationService {
         });
         await invitation.save();
 
-        const inviteLink = `http://localhost:3000/invitations/accept/${invitation._id}/${encodeURIComponent(sender)}/${encodeURIComponent(teamName)}`;
+        const inviteLink = `http://localhost:3000/api/invitation/accept/${invitation._id}?redirect=true`;
 
         try {
           await transporter.sendMail({
