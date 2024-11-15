@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BoardService } from './boards.service';
 import { BoardDto } from './boards.dto';
@@ -8,8 +8,8 @@ import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse, ApiParam, ApiBody, A
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Boards')
-@ApiBearerAuth()
-@UseGuards(AuthGuard('jwt'))
+//@ApiBearerAuth()
+//@UseGuards(AuthGuard('jwt'))
 @Controller('api/board')
 export class BoardController {
   constructor(
@@ -190,7 +190,7 @@ export class BoardController {
     return this.boardService.findLikedBoardsByUser(userId);
   }
 
-  @Patch('/currentStep/:id')
+@Patch('/currentStep/:id')
 @ApiOperation({
   summary: '보드 단계 업데이트',
   description: '보드의 현재 진행중인 단계를 업데이트합니다.<br>(JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)'
@@ -207,7 +207,7 @@ export class BoardController {
     type: 'object',
     properties: {
       currentStep: {
-        type: 'string',
+        type: 'number',
         description: '새로운 현재 단계 값',
         example: '2'
       }
@@ -225,7 +225,13 @@ async updateCurrentStep(
   @Param('id') boardId: string,
   @Body('currentStep') currentStep: string
 ) {
-  await this.boardService.updateCurrentStep(boardId, currentStep);
+  const parsedStep = Number(currentStep);
+
+  if (isNaN(parsedStep)) {
+    throw new BadRequestException('currentStep는 숫자여야 합니다.');
+  }
+
+  await this.boardService.updateCurrentStep(boardId, parsedStep);
   return { message: 'currentStep 업데이트 완료!' };
 }
 

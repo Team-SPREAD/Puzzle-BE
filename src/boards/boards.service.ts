@@ -80,13 +80,13 @@ export class BoardService {
     return this.boardModel.find({ team: { $in: teamIds }, like: true }).exec();
   }
 
-  async updateCurrentStep(boardId: string, currentStep: string): Promise<void> {
+  async updateCurrentStep(boardId: string, currentStep: number): Promise<void> {
     const board = await this.boardModel.findByIdAndUpdate(
       boardId,
       { currentStep, updatedDate: new Date() },
       { new: true }
     );
-
+  
     if (!board) {
       throw new NotFoundException('보드를 찾을 수 없습니다.');
     }

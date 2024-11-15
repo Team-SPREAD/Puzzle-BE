@@ -12,8 +12,8 @@ export class Board extends Document {
   @Prop()
   boardImgUrl: string;
 
-  @Prop({ default: '1' })
-  currentStep: string;
+  @Prop({ type: Number, default: 1 })
+  currentStep: number;  
 
   @Prop({ default: Date.now })
   createdDate: Date;
