@@ -83,6 +83,13 @@ export class BoardService {
     return this.boardModel.find({ team: { $in: teamIds }, like: true }).exec();
   }
 
+  async findMyAllBoardsByUser(userId: string): Promise<Board[]> {
+    const teams = await this.teamModel.find({ users: new Types.ObjectId(userId) });
+    const teamIds = teams.map(team => team._id);
+    return this.boardModel.find({ team: { $in: teamIds } }).exec();
+  }
+
+
   async updateCurrentStep(boardId: string, currentStep: number): Promise<void> {
     const board = await this.boardModel.findByIdAndUpdate(
       boardId,
