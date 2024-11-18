@@ -195,6 +195,42 @@ export class BoardController {
     return this.boardService.findLikedBoardsByUser(userId);
   }
 
+
+  @Get()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({
+    summary: '사용자의 모든 보드 조회',
+    description: '사용자가 속한 모든 팀에서 가진 보드들을 조회합니다.<br>(JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)'
+  })
+  @ApiResponse({
+    status: 200,
+    description: '모든 보드 목록 조회 성공',
+    schema: {
+      example: [
+        {
+          "_id": "6734af252b7be406ab531132",
+          "boardName": "TestBoard",
+          "description": "테스트 보드입니다.",
+          "boardImgUrl": "https://보드이미지URL.png",
+          "currentStep": "1",
+          "createdDate": "2024-11-12T13:52:37.649Z",
+          "updatedDate": "2024-11-13T13:52:37.649Z",
+          "team": "67346c47ce80db054ae1234",
+          "like": true,
+          "__v": 0
+        }
+      ]
+    }
+  })
+  async getMyAllBoards(@Req() req: Request) {
+    const userId = req.user['id'];
+    return this.boardService.findMyAllBoardsByUser(userId);
+  }
+
+
+
+
+
 @Patch('/currentStep/:id')
 @ApiOperation({
   summary: '보드 단계 업데이트',
