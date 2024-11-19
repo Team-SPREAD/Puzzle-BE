@@ -3,12 +3,6 @@ import { Document, Types } from 'mongoose';
 
 @Schema()
 export class Step extends Document {
-  
-  @Prop()
-  step1ImgUrl: string;
-
-  @Prop()
-  step2ImgUrl: string;
 
   @Prop()
   step3ImgUrl: string;
