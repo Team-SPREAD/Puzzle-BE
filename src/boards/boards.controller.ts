@@ -4,16 +4,17 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { BoardService } from './boards.service';
 import { BoardDto } from './boards.dto';
 import { S3Service } from '../aws/s3/s3.service';
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse, ApiParam, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse, ApiParam, ApiBody, ApiConsumes, ApiHeader } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Team } from 'src/teams/teams.schema';
 import axios from 'axios';
 import { TeamService } from 'src/teams/teams.service';
 import { Types } from 'mongoose';
+import * as jwt from 'jsonwebtoken';
 
 @ApiTags('Boards')
 @ApiBearerAuth()
-//@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'))
 @Controller('api/board')
 export class BoardController {
   constructor(
@@ -230,51 +231,74 @@ export class BoardController {
 
 
 
-
-@Patch('/currentStep/:id')
-@ApiOperation({
-  summary: '보드 단계 업데이트',
-  description: '보드의 현재 진행중인 단계를 업데이트합니다.<br>(JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)'
-})
-@ApiParam({
-  name: 'id',
-  required: true,
-  description: '업데이트할 보드의 고유 ID',
-  example: '60d9f6f10c1a1b2f7c3d9a20'
-})
-@ApiBody({
-  description: '업데이트할 단계 정보',
-  schema: {
-    type: 'object',
-    properties: {
-      currentStep: {
-        type: 'number',
-        description: '새로운 현재 단계 값',
-        example: '2'
-      }
+  @Patch('/currentStep/:id')
+  @ApiOperation({
+    summary: '보드 단계 업데이트',
+    description: '보드의 현재 진행 중인 단계를 업데이트합니다.<br>(JWT 토큰 및 Liveblocks 토큰 인증이 필요합니다 - 헤더에 포함할 것!)',
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: '업데이트할 보드의 고유 ID',
+    example: '60d9f6f10c1a1b2f7c3d9a20',
+  })
+  @ApiBody({
+    description: '업데이트할 단계 정보',
+    schema: {
+      type: 'object',
+      properties: {
+        currentStep: {
+          type: 'number',
+          description: '새로운 현재 단계 값',
+          example: 2,
+        },
+      },
+      required: ['currentStep'],
     },
-    required: ['currentStep'],
-  },
-})
-@ApiResponse({
-  status: 200,
-  description: '단계 업데이트 성공!',
-  schema: { example: { message: 'currentStep 업데이트 완료!' } }
-})
-@ApiResponse({ status: 404, description: '보드를 찾을 수 없습니다.' })
-async updateCurrentStep(
-  @Param('id') boardId: string,
-  @Body('currentStep') currentStep: string
-) {
-  const parsedStep = Number(currentStep);
-
-  if (isNaN(parsedStep)) {
-    throw new BadRequestException('currentStep는 숫자여야 합니다.');
+  })
+  @ApiHeader({
+    name: 'liveblocks-token',
+    description: 'Liveblocks 인증 토큰',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '단계 업데이트 성공!',
+    schema: { example: { message: 'currentStep 업데이트 완료!' } },
+  })
+  @ApiResponse({ status: 404, description: '보드를 찾을 수 없습니다.' })
+  @ApiResponse({
+    status: 401,
+    description: '유효하지 않은 Liveblocks 토큰입니다.',
+  })
+  async updateCurrentStep(
+    @Param('id') boardId: string,
+    @Body('currentStep') currentStep: string,
+    @Req() req: Request,
+  ) {
+    const parsedStep = Number(currentStep);
+  
+    if (isNaN(parsedStep)) {
+      throw new BadRequestException('currentStep는 숫자여야 합니다.');
+    }
+  
+    // 1. Liveblocks 토큰 확인
+    const liveblocksToken = req.headers['liveblocks-token'] as string;
+    if (!liveblocksToken) {
+      throw new BadRequestException('Liveblocks 토큰이 필요합니다.');
+    }
+  
+    // 2. Liveblocks 토큰 검증
+    const isTokenValid = await this.verifyLiveblocksToken(liveblocksToken, boardId);
+    if (!isTokenValid) {
+      throw new UnauthorizedException('유효하지 않은 Liveblocks 토큰입니다.');
+    }
+  
+    // 3. 단계 업데이트
+    await this.boardService.updateCurrentStep(boardId, parsedStep);
+  
+    return { message: 'currentStep 업데이트 완료!' };
   }
-
-  await this.boardService.updateCurrentStep(boardId, parsedStep);
-  return { message: 'currentStep 업데이트 완료!' };
-}
 
 
 @Post('/token')
@@ -409,5 +433,34 @@ async generateRoomToken(@Body('roomId') roomId: string, @Req() req) {
   return { token: response.data.token };
 }
 
+
+// Liveblocks 토큰 검증 메서드
+private async verifyLiveblocksToken(token: string, boardId: string): Promise<boolean> {
+  try {
+    const decoded = jwt.decode(token) as any;
+
+    console.log('디코딩된 토큰:', decoded);
+
+    // 1. roomId 확인
+    const permissions = decoded?.perms || {};
+    if (!permissions[boardId]?.includes('room:write')) {
+      console.error('토큰에 room:write 권한 없음');
+      return false;
+    }
+
+    // 2. 토큰 만료 확인
+    const now = Math.floor(Date.now() / 1000); // 현재 시간 (초 단위)
+    if (decoded.exp && decoded.exp < now) {
+      console.error('토큰 만료됨');
+      return false;
+    }
+
+    console.log('Liveblocks 토큰 유효성 확인 완료');
+    return true;
+  } catch (error) {
+    console.error('Liveblocks 토큰 검증 실패:', error.message);
+    return false;
+  }
+}
 
 }
