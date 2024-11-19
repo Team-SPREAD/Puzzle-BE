@@ -21,62 +21,68 @@ export class StepsController {
   ) {}
 
   @Post(':boardId/:stepNumber')
-@ApiOperation({ summary: '단계 이미지 저장', description: '각 단계의 이미지를 저장합니다. Liveblocks 토큰이 필요합니다.<br>(추가로 사용자 JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)' })
-@ApiConsumes('multipart/form-data')
-@ApiResponse({ status: 201, description: '단계 이미지 저장 완료!', schema: { example: { message: '단계 이미지 저장 완료!' } } })
-@ApiParam({ name: 'boardId', description: '보드 ID' })
-@ApiParam({ name: 'stepNumber', description: '단계 번호 (1-9)' })
-@ApiHeader({
-  name: 'liveblocks-token',
-  description: 'Liveblocks 인증 토큰',
-  required: true, 
-})
-@UseInterceptors(FileInterceptor('stepImg'))
-@ApiBody({
-  schema: {
-    type: 'object',
-    properties: {
-      stepImg: {
-        type: 'string',
-        format: 'binary',
-        description: '단계 이미지 파일',
+  @ApiOperation({
+    summary: '단계 이미지 저장',
+    description: '3~9단계의 이미지를 저장합니다. Liveblocks 토큰이 필요합니다.<br>(추가로 사용자 JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 201, description: '단계 이미지 저장 완료!', schema: { example: { message: '단계 이미지 저장 완료!' } } })
+  @ApiParam({ name: 'boardId', description: '보드 ID' })
+  @ApiParam({ name: 'stepNumber', description: '단계 번호 (3~9)' })
+  @ApiHeader({
+    name: 'liveblocks-token',
+    description: 'Liveblocks 인증 토큰',
+    required: true,
+  })
+  @UseInterceptors(FileInterceptor('stepImg'))
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        stepImg: {
+          type: 'string',
+          format: 'binary',
+          description: '단계 이미지 파일',
+        },
       },
     },
-  },
-})
-async saveStepImage(
-  @Param('boardId') boardId: string,
-  @Param('stepNumber') stepNumber: number,
-  @UploadedFile() file: Express.Multer.File,
-  @Req() req: Request,
-) {
-  const boardObjectId = new Types.ObjectId(boardId);
-
-  if (!file) {
-    throw new BadRequestException('이미지가 제공되지 않았습니다.');
+  })
+  async saveStepImage(
+    @Param('boardId') boardId: string,
+    @Param('stepNumber') stepNumber: string, // 문자열로 받음
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
+  ) {
+    const validSteps = [3, 4, 5, 6, 7, 8, 9];
+    const parsedStepNumber = Number(stepNumber); // 숫자로 변환
+  
+    if (!validSteps.includes(parsedStepNumber)) {
+      throw new BadRequestException(`유효하지 않은 단계 번호입니다: ${stepNumber}. 유효한 단계는 ${validSteps.join(', ')}입니다.`);
+    }
+  
+    if (!file) {
+      throw new BadRequestException('이미지가 제공되지 않았습니다.');
+    }
+  
+    const liveblocksToken = req.headers['liveblocks-token'] as string;
+    if (!liveblocksToken) {
+      throw new BadRequestException('Liveblocks 토큰이 필요합니다.');
+    }
+  
+    const isTokenValid = await this.verifyLiveblocksToken(liveblocksToken, boardId);
+    if (!isTokenValid) {
+      throw new UnauthorizedException('유효하지 않은 Liveblocks 토큰입니다.');
+    }
+  
+    const boardObjectId = new Types.ObjectId(boardId);
+  
+    const uploadResult = await this.s3Service.uploadSingleFile(file);
+    const stepImgUrl = uploadResult.url;
+  
+    const step = await this.stepsService.saveStepImage(boardObjectId, parsedStepNumber, stepImgUrl);
+  
+    return { message: `단계 ${stepNumber} 이미지 저장 완료!` };
   }
-
-  // 1. Liveblocks 토큰 확인
-  const liveblocksToken = req.headers['liveblocks-token'] as string;
-  if (!liveblocksToken) {
-    throw new BadRequestException('Liveblocks 토큰이 필요합니다.');
-  }
-
-  // 2. Liveblocks 토큰 검증
-  const isTokenValid = await this.verifyLiveblocksToken(liveblocksToken, boardId);
-  if (!isTokenValid) {
-    throw new UnauthorizedException('유효하지 않은 Liveblocks 토큰입니다.');
-  }
-
-  // S3에 업로드
-  const uploadResult = await this.s3Service.uploadSingleFile(file);
-  const stepImgUrl = uploadResult.url;
-
-  // 단계 이미지 저장
-  await this.stepsService.saveStepImage(boardObjectId, stepNumber, stepImgUrl);
-
-  return { message: `단계 ${stepNumber} 이미지 저장 완료!` };
-}
 
 @Get(':boardId/result')
 @ApiOperation({

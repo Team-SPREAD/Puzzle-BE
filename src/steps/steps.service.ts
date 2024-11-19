@@ -13,25 +13,23 @@ export class StepsService {
   ) {}
 
   async saveStepImage(boardId: Types.ObjectId, stepNumber: number, stepImgUrl: string): Promise<Step> {
-    // stepNumber의 타입과 값 출력
-    console.log('stepNumber:', stepNumber, typeof stepNumber);
+    const validSteps = [3, 4, 5, 6, 7, 8, 9];
+    
+    if (!validSteps.includes(stepNumber)) {
+      throw new Error(`유효하지 않은 단계 번호입니다: ${stepNumber}. 유효한 단계는 ${validSteps.join(', ')}입니다.`);
+    }
   
-    const stepField = `step${stepNumber}ImgUrl`; // 예: step1ImgUrl
+    const stepField = `step${stepNumber}ImgUrl`; // 예: step3ImgUrl
     const updateData = { [stepField]: stepImgUrl, updatedDate: new Date() };
   
-    // 업데이트된 Step 문서
     const step = await this.stepModel.findOneAndUpdate(
       { board: boardId },
       { $set: updateData },
-      { new: true, upsert: true }, // 없으면 생성
+      { new: true, upsert: true }
     );
-    console.log('Updated Step Document:', step);
   
-    // stepNumber를 정수로 변환하여 조건 확인
-    if (Number(stepNumber) === 9) {
+    if (stepNumber === 9) {
       const stepImages = [
-        step.step1ImgUrl,
-        step.step2ImgUrl,
         step.step3ImgUrl,
         step.step4ImgUrl,
         step.step5ImgUrl,
@@ -39,28 +37,24 @@ export class StepsService {
         step.step7ImgUrl,
         step.step8ImgUrl,
         step.step9ImgUrl,
-      ].filter((url) => url !== undefined); // undefined 제거
-    
-      console.log('Images to send to Python API:', stepImages);
-    
-      if (stepImages.length !== 9) {
-        console.error('Not all steps have images:', stepImages);
-        throw new Error('모든 단계 이미지가 필요합니다.');
+      ].filter((url) => url !== undefined);
+  
+      if (stepImages.length !== 7) {
+        throw new Error('모든 단계 이미지(3~9)가 필요합니다.');
       }
-    
+  
       const markdownResult = await this.analyzeImagesWithPython(stepImages);
       step.result = markdownResult;
       await step.save();
-    } else {
-      console.log('stepNumber is not 9, skipping Python API call.');
     }
   
     return step;
   }
   
+  
 
   private async analyzeImagesWithPython(imageUrls: string[]): Promise<string> {
-    const pythonApiUrl = process.env.PYTHON_API_URL || 'http://localhost:8000/analyze-images';
+    const pythonApiUrl = process.env.PYTHON_API_URL;
     try {
         console.log('Python API 호출 시작:', pythonApiUrl, imageUrls);
         const response = await this.httpService.post(pythonApiUrl, { imageUrls }).toPromise();
