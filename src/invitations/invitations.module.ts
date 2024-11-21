@@ -5,11 +5,13 @@ import { InvitationService } from './invitation.service';
 import { InvitationController } from './invitation.controller';
 import { Invitation, InvitationSchema } from './invitation.schema';
 import { TeamModule } from '../teams/teams.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Invitation.name, schema: InvitationSchema }]),
-    TeamModule, // TeamModule을 임포트하여 TeamService 접근 가능하게 설정
+    UsersModule,
+    TeamModule,
   ],
   controllers: [InvitationController],
   providers: [InvitationService],

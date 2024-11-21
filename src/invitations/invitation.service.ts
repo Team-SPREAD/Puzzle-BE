@@ -4,13 +4,17 @@ import { Model, Types } from 'mongoose';
 import * as nodemailer from 'nodemailer';
 import { Invitation } from './invitation.schema';
 import { TeamService } from '../teams/teams.service';
+import { User } from 'src/users/users.schema';
+import { Team } from 'src/teams/teams.schema';
 
 @Injectable()
 export class InvitationService {
   constructor(
     @InjectModel(Invitation.name) private readonly invitationModel: Model<Invitation>,
+    @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Team.name) private readonly teamModel: Model<Team>,
     private readonly teamService: TeamService,
-  ) {}
+  ) { }
 
   // 여러 사용자 초대 및 이메일 전송
   async inviteToMultipleUsers(teamId: string, invitedEmails: string[], sender: string): Promise<any[]> {
@@ -25,7 +29,6 @@ export class InvitationService {
     // 팀 이름 조회
     const team = await this.teamService.findTeamById(teamId);
     const teamName = team?.teamName || '팀';
-
     const results = await Promise.all(
       invitedEmails.map(async (email) => {
         const invitation = new this.invitationModel({
@@ -35,7 +38,7 @@ export class InvitationService {
         });
         await invitation.save();
 
-        const inviteLink = `http://localhost:3000/api/invitation/redirection/${invitation._id}/${encodeURIComponent(sender)}/${encodeURIComponent(teamName)}`;
+        const inviteLink = `http://localhost:3000/api/invitation/acceptance/${invitation._id}`;
 
         try {
           await transporter.sendMail({
@@ -75,7 +78,11 @@ export class InvitationService {
                                 <table cellpadding="0" cellspacing="0">
                                     <tr>
                                         <td style="background-color: #007BFF; border-radius: 4px;">
-                                            <a href="${inviteLink}" target="_blank" style="display: inline-block; padding: 16px 32px; color: #ffffff; font-size: 16px; font-weight: bold; text-decoration: none;">팀 참여하기</a>
+                                          <form action="${inviteLink}" method="POST" style="margin: 0; display: inline;">
+                                            <button type="submit" style="background-color: #007BFF; border: none; border-radius: 4px; padding: 16px 32px; color: #ffffff; font-size: 16px; font-weight: bold; text-decoration: none; cursor: pointer;">
+                                                팀 참여하기
+                                            </button>
+                                         </form>    
                                         </td>
                                     </tr>
                                 </table>
@@ -119,20 +126,37 @@ export class InvitationService {
     return results;
   }
 
-  // 초대 수락
-  async acceptInvite(invitationId: string, userId: string): Promise<string> {
+  async acceptInviteWithoutUser(invitationId: string): Promise<string> {
     const invitation = await this.invitationModel.findById(invitationId);
 
     if (!invitation || invitation.status !== 'pending') {
       throw new Error('Invalid or already accepted invitation');
     }
 
-    await this.teamService.addUserToTeam(invitation.teamId, userId);
     invitation.status = 'accepted';
     await invitation.save();
 
+    const user = await this.userModel.findOne({ email: invitation.invitedEmail });
+
+    if (user) {
+      await this.addUserToTeam(invitation.teamId.toString(), user._id.toString());
+    }
+
     return 'Invitation accepted';
   }
+
+  async addUserToTeam(teamId: string, userId: string): Promise<void> {
+    const team = await this.teamModel.findById(new Types.ObjectId(teamId)); // teamId 변환
+    if (!team) {
+      throw new Error('Team not found');
+    }
+
+    if (!team.users.includes(new Types.ObjectId(userId))) { // userId 변환
+      team.users.push(new Types.ObjectId(userId));
+      await team.save();
+    }
+  }
+
 
   // 초대 ID로 초대 조회
   async findInvitationById(id: string): Promise<Invitation | null> {
