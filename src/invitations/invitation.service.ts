@@ -38,7 +38,7 @@ export class InvitationService {
         });
         await invitation.save();
 
-        const inviteLink = `http://localhost:3000/api/invitation/acceptance/${invitation._id}`;
+        const inviteLink = `http://kim-sun-woo.com:3000/api/invitation/acceptance/${invitation._id}`;
 
         try {
           await transporter.sendMail({
