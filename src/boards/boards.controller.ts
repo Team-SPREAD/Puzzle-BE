@@ -463,4 +463,52 @@ private async verifyLiveblocksToken(token: string, boardId: string): Promise<boo
   }
 }
 
+
+
+@UseGuards(AuthGuard('jwt'))
+@ApiOperation({
+  summary: '보드 진행 단계 조회',
+  description: '특정 보드의 현재 진행 중인 단계를 조회합니다.<br>(JWT 토큰 인증이 필요합니다 - 헤더에 포함할 것!)',
+})
+@ApiParam({
+  name: 'id',
+  required: true,
+  description: '조회할 보드의 고유 ID',
+  example: '60d9f6f10c1a1b2f7c3d9a20',
+})
+@ApiResponse({
+  status: 200,
+  description: '보드 진행 단계 조회 성공',
+  schema: {
+    example: {
+      "currentStep": 2
+    },
+  },
+})
+@ApiResponse({
+  status: 404,
+  description: '보드를 찾을 수 없습니다.',
+  schema: {
+    example: {
+      statusCode: 404,
+      message: '보드를 찾을 수 없습니다.',
+      error: 'Not Found',
+    },
+  },
+})
+@Get('/:id/currentStep')
+async getBoardCurrentStep(@Param('id') boardId: string) {
+  console.log('Controller - Received boardId:', boardId);
+
+  const currentStep = await this.boardService.findBoardCurrentStepById(boardId);
+  console.log('Controller - CurrentStep result:', currentStep);
+
+  if (currentStep === null) {
+    throw new NotFoundException('보드를 찾을 수 없습니다.');
+  }
+
+  return { currentStep };
+}
+
+
 }

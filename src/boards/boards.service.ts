@@ -1,5 +1,5 @@
 // src/boards/boards.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Board } from './boards.schema';
@@ -30,7 +30,22 @@ export class BoardService {
   }
 
   async findBoardById(boardId: string): Promise<Board | null> {
-    return this.boardModel.findById(boardId).exec();
+    return this.boardModel.findById(new Types.ObjectId(boardId)).exec();
+  }
+
+  async findBoardCurrentStepById(boardId: string): Promise<number | null> {
+    console.log('Service - Received boardId:', boardId);
+  
+    if (!Types.ObjectId.isValid(boardId)) {
+      console.log('Service - Invalid ObjectId:', boardId);
+      throw new BadRequestException('유효하지 않은 ObjectId 형식입니다.');
+    }
+  
+    const result = await this.boardModel.findById(new Types.ObjectId(boardId)).select('currentStep').exec();
+    console.log('Service - Query result:', result);
+  
+    // result가 null이 아닌 경우 currentStep 반환
+    return result ? result.currentStep : null;
   }
 
   async updateBoard(
