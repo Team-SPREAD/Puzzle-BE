@@ -14,10 +14,13 @@ export class InvitationService {
     @InjectModel(User.name) private readonly userModel: Model<User>,
     @InjectModel(Team.name) private readonly teamModel: Model<Team>,
     private readonly teamService: TeamService,
-  ) { }
+  ) {}
 
-  // 여러 사용자 초대 및 이메일 전송
-  async inviteToMultipleUsers(teamId: string, invitedEmails: string[], sender: string): Promise<any[]> {
+  async inviteToMultipleUsers(
+    teamId: string,
+    invitedEmails: string[],
+    sender: string,
+  ): Promise<{ email: string; status: string; error?: string }[]> {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -26,111 +29,49 @@ export class InvitationService {
       },
     });
 
-    // 팀 이름 조회
-    const team = await this.teamService.findTeamById(teamId);
-    const teamName = team?.teamName || '팀';
-    const results = await Promise.all(
-      invitedEmails.map(async (email) => {
-        const invitation = new this.invitationModel({
-          teamId: new Types.ObjectId(teamId),
-          invitedEmail: email,
-          sender,
-        });
-        await invitation.save();
+    try {
+      const team = await this.teamService.findTeamById(teamId);
+      const teamName = team?.teamName || '팀';
 
-        const inviteLink = `http://kim-sun-woo.com:3000/api/invitation/acceptance/${invitation._id}`;
+      const results = await Promise.all(
+        invitedEmails.map(async (email) => {
+          try {
+            const invitation = new this.invitationModel({
+              teamId: new Types.ObjectId(teamId),
+              invitedEmail: email,
+              sender,
+            });
+            await invitation.save();
 
-        try {
-          await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: `${sender}님이 '${teamName}'팀에 초대했습니다!`,
-            text: `You have been invited to join ${teamName}. Click the link to accept: ${inviteLink}`,
-            html: `
-              <div style="max-width: 600px; margin: 0 auto; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #333333; background-color: #ffffff;">
-                <div style="background-color: #007BFF; padding: 32px 24px; text-align: center;">
-                    <img src="https://spread-puzzle-bucket.s3.ap-northeast-2.amazonaws.com/app-images/puzzle-logo.png" alt="Service Logo" style="width: 360px; height: auto; margin-bottom: 24px;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">
-                        '${teamName}' 팀에 초대합니다
-                    </h1>
-                </div>
-        
-                <div style="padding: 32px 24px; background-color: #ffffff;">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px; border-collapse: separate;">
-                        <tr>
-                            <td style="background-color: #F0F7FF; padding: 16px; border-radius: 8px;">
-                                <p style="margin: 0; font-size: 16px; color: #007BFF;">
-                                    <strong style="color: #333333">${sender}</strong>님이 보낸 초대장입니다
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-        
-                    <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #333333;">
-                        안녕하세요!<br><br>
-                        '${teamName}'의 새로운 여정에 함께하실 분을 찾고 있습니다.<br>
-                        당신의 역량과 열정이 우리 팀을 더욱 빛나게 할 거라 믿습니다.
-                    </p>
-        
-                    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
-                        <tr>
-                            <td align="center">
-                                <table cellpadding="0" cellspacing="0">
-                                    <tr>
-                                        <td style="background-color: #007BFF; border-radius: 4px;">
-                                          <form action="${inviteLink}" method="POST" style="margin: 0; display: inline;">
-                                            <button type="submit" style="background-color: #007BFF; border: none; border-radius: 4px; padding: 16px 32px; color: #ffffff; font-size: 16px; font-weight: bold; text-decoration: none; cursor: pointer;">
-                                                팀 참여하기
-                                            </button>
-                                         </form>    
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                    </table>
-        
-                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
-                        <tr>
-                            <td style="background-color: #F8F9FA; padding: 16px; border-radius: 4px;">
-                                <p style="margin: 0 0 8px 0; font-size: 14px; color: #666666;">
-                                    버튼이 작동하지 않나요? 아래 링크를 복사하여 브라우저에 붙여넣어 주세요:
-                                </p>
-                                <p style="margin: 0; font-size: 14px; word-break: break-all;">
-                                    <a href="${inviteLink}" style="color: #007BFF; text-decoration: none;">${inviteLink}</a>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-        
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                            <td style="border-top: 1px solid #E9ECEF; padding-top: 24px;">
-                                <p style="margin: 0; text-align: center; font-size: 14px; color: #666666;">
-                                    도움이 필요하신가요?
-                                    <a href="https://spread-puzzle.io" style="color: #007BFF; text-decoration: none;">고객센터 방문하기</a>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-              </div>`
-          });
-          return { email, status: '메일 전송 성공' };
-        } catch (error) {
-          return { email, status: '메일 전송 실패', error: error.message };
-        }
-      })
-    );
+            const inviteLink = `http://kim-sun-woo.com:3000/api/invitation/acceptance/${invitation._id}`;
 
-    return results;
+            await transporter.sendMail({
+              from: process.env.EMAIL_USER,
+              to: email,
+              subject: `${sender}님이 '${teamName}'팀에 초대했습니다!`,
+              text: `You have been invited to join ${teamName}. Click the link to accept: ${inviteLink}`,
+              html: this.generateEmailTemplate(sender, teamName, inviteLink),
+
+            });
+
+            return { email, status: '메일 전송 성공' };
+          } catch (error) {
+            return { email, status: '메일 전송 실패', error: error.message };
+          }
+        }),
+      );
+
+      return results;
+    } catch (error) {
+      throw new Error(`Invitation processing failed: ${error.message}`);
+    }
   }
 
   async acceptInviteWithoutUser(invitationId: string): Promise<string> {
     const invitation = await this.invitationModel.findById(invitationId);
 
     if (!invitation || invitation.status !== 'pending') {
-      throw new Error('Invalid or already accepted invitation');
+      throw new Error('유효하지 않거나 이미 수락된 초대입니다.');
     }
 
     invitation.status = 'accepted';
@@ -142,30 +83,90 @@ export class InvitationService {
       await this.addUserToTeam(invitation.teamId.toString(), user._id.toString());
     }
 
-    return 'Invitation accepted';
+    return '초대가 수락되었습니다.';
   }
 
   async addUserToTeam(teamId: string, userId: string): Promise<void> {
-    const team = await this.teamModel.findById(new Types.ObjectId(teamId)); // teamId 변환
+    const team = await this.teamModel.findById(new Types.ObjectId(teamId));
     if (!team) {
-      throw new Error('Team not found');
+      throw new Error('팀을 찾을 수 없습니다.');
     }
 
-    if (!team.users.includes(new Types.ObjectId(userId))) { // userId 변환
-      team.users.push(new Types.ObjectId(userId));
+    const userIdObject = new Types.ObjectId(userId);
+    if (!team.users.some((user) => user.equals(userIdObject))) {
+      team.users.push(userIdObject);
       await team.save();
     }
   }
 
-
-  // 초대 ID로 초대 조회
   async findInvitationById(id: string): Promise<Invitation | null> {
     return this.invitationModel.findById(id).exec();
   }
 
-  // 팀 이름 조회
   async getTeamName(teamId: Types.ObjectId): Promise<{ teamName: string }> {
     const team = await this.teamService.findTeamById(teamId.toString());
+    if (!team) {
+      throw new Error('팀을 찾을 수 없습니다.');
+    }
     return { teamName: team.teamName };
   }
+
+  private generateEmailTemplate(sender: string, teamName: string, inviteLink: string): string {
+    return `
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; margin: 20px auto; background-color: #ffffff;">
+            <tr>
+                <td style="padding: 40px 20px; text-align: center;">
+                    <!-- 배경 이미지를 테이블 셀의 배경으로 설정 -->
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="
+                        background-image: url('https://spread-puzzle-bucket.s3.ap-northeast-2.amazonaws.com/app-images/Puzlle-mail-template.png');
+                        background-repeat: no-repeat;
+                        background-position: center;
+                        background-size: cover;
+                        height: 700px;
+                        border-radius: 10px;">
+                        <tr>
+                            <td style="padding-top: 30%; text-align: center;">
+                                <p style="font-size: 28px; font-weight: bold; color: #333; margin: 0;">
+                                    ${sender}님이 보낸 초대장입니다
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-top: 15%; text-align: center;">
+                                <p style="font-size: 20px; color: #333; margin: 30px 0;">
+                                    <strong>'${teamName}'</strong>에 당신을 초대합니다!
+                                </p>
+                                <p style="font-size: 20px; color: #333; margin: 10px 0;">
+                                    당신의 독창적인 아이디어와 열정이
+                                </p>
+                                <p style="font-size: 20px; color: #333; margin: 10px 0;">
+                                    팀을 더욱 빛나게 할 것이라 믿습니다.
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-top: 40px; text-align: center;">
+                                    <form action="${inviteLink}" method="POST" style="margin: 0; display: inline;">
+                                            <button type="submit"style="
+                                    display: inline-block;
+                                    background-color: #4f46e5;
+                                    color: #ffffff;
+                                    padding: 15px 20px;
+                                    font-size: 16px;
+                                    border-radius: 5px;
+                                    text-decoration: none;
+                                    margin: 20px 0;">
+                                                팀 참여하기
+                                            </button>
+                                         </form>   
+                                <p style="font-size: 20px; font-weight: bold; color: #333; margin: 30px 0;">
+                                    지금 바로 초대를 수락하고 Puzzle을 시작해보세요!
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>`;
+}
 }
