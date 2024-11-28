@@ -34,7 +34,7 @@ export class AuthService {
           expiresIn: process.env.JWT_EXPIRES,
         }),
       };
-      return res.redirect(`http://localhost:3000/dashboard/?token=${googleJwt.token}`);
+      return res.redirect(`http://kim-sun-woo.com:3000/dashboard/?token=${googleJwt.token}`);
 
     } catch (error) {
       console.error(error);
