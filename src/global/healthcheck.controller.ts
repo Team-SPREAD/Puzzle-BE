@@ -23,7 +23,7 @@ export class HealthCheckController {
   // 서버 환경을 반환하는 엔드포인트
   @Get('env')
   getEnv() {
-    const env = this.configService.get<string>('server.env');
+    const env = this.configService.get<string>('serverEnv');
     return { env };
   }
 }
