@@ -38,9 +38,9 @@ jobs:
     steps:
       - name: Set target environment
         run: |
-          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.HOST }}/api/env")
+          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.NGINX_EC2_DOMAIN }}/api/env")
           if [ $STATUS -eq 200 ]; then
-            CURRENT_ENV=$(curl -s "http://${{ secrets.HOST }}/api/env")
+            CURRENT_ENV=$(curl -s "http://${{ secrets.NGINX_EC2_DOMAIN }}/api/env")
           else
             CURRENT_ENV=green
           fi
