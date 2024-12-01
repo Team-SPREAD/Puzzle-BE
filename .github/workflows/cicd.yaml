@@ -51,6 +51,7 @@ jobs:
           else
             echo "PORT=3000" >> $GITHUB_ENV
             echo "TARGET_ENV=blue" >> $GITHUB_ENV
+          fi
 
       - name: SSH and deploy
         uses: appleboy/ssh-action@v0.1.10
@@ -59,6 +60,7 @@ jobs:
           host: ${{ secrets.HOST }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            cd server
             docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }}
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
             docker-compose -f docker-compose-${{ env.TARGET_ENV }}.yml up -d
