@@ -10,10 +10,13 @@ import { TeamModule } from './teams/teams.module';
 import { InvitationModule } from './invitations/invitations.module';
 import { BoardModule } from './boards/board.module';
 import { StepsModule } from './steps/steps.module'; // StepsModule 추가
+import { HealthCheckController } from './global/healthcheck.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(), // .env 파일 및 환경 변수 로드
+    ConfigModule.forRoot({
+      isGlobal: true, // 전역에서 환경 변수 사용 가능
+    }), // .env 파일 및 환경 변수 로드
     MongooseModule.forRoot(process.env.MONGODB_URI), // MongoDB 연결
     AuthModule,
     UsersModule,
@@ -22,7 +25,7 @@ import { StepsModule } from './steps/steps.module'; // StepsModule 추가
     BoardModule,
     StepsModule, // StepsModule 등록
   ],
-  controllers: [AppController],
+  controllers: [AppController,HealthCheckController],
   providers: [AppService],
 })
 export class AppModule {}
