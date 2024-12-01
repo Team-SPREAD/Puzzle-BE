@@ -118,6 +118,7 @@ deploy:
           key: ${{ secrets.EC2_SSH_KEY }}
           script_stop: true
           script: |
+            cd server
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME}}/puzzle:latest
             sudo docker-compose -f docker-compose-${{env.TARGET_UPSTREAM}}.yml up -d
 
@@ -130,6 +131,7 @@ deploy:
           key: ${{ secrets.EC2_SSH_KEY_2 }}
           script_stop: true
           script: |
+            cd server
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME}}/puzzle:latest
             sudo docker-compose -f docker-compose-${{env.TARGET_UPSTREAM}}.yml up -d
 
