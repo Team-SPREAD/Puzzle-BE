@@ -2,9 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
   // Swagger 설정
   const config = new DocumentBuilder()
@@ -35,8 +37,9 @@ async function bootstrap() {
     credentials: true, // 쿠키 및 인증 헤더 포함 허용
   });
 
-  // 포트 출력 로그 추가
-  const port = process.env.PORT || 3000;
+  // ConfigService를 통해 PORT 가져오기
+  const port = parseInt(configService.get('PORT'), 10) || 3000;
+
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
 }
