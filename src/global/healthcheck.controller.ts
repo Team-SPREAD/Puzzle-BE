@@ -9,8 +9,8 @@ export class HealthCheckController {
   @Get('hc')
   healthCheck() {
     const serverName = this.configService.get<string>('serverName');
-    const serverPort = this.configService.get<string>('server.port');
-    const env = this.configService.get<string>('server.env');
+    const serverPort = this.configService.get<string>('serverPort');
+    const env = this.configService.get<string>('serverEnv');
 
     // 서버 상태 정보를 반환
     return {
