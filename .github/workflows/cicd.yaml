@@ -38,9 +38,9 @@ jobs:
     steps:
       - name: Set target IP (MAIN)
         run: |
-          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.MAIN_NGINX_EC2_DOMAIN }}/api/env")
+          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.NGINX_EC2_DOMAIN }}/api/env")
           if [ "$STATUS" -eq 200 ]; then
-            CURRENT_UPSTREAM=$(curl -s "http://${{ secrets.MAIN_NGINX_EC2_DOMAIN }}/api/env")
+            CURRENT_UPSTREAM=$(curl -s "http://${{ secrets.NGINX_EC2_DOMAIN }}/api/env")
           else
             CURRENT_UPSTREAM=green
           fi
