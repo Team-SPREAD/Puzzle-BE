@@ -32,7 +32,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:3000', // 로컬 개발 환경
-      'https://spread-puzzle.io/', // 배포 환경
+      'https://spread-puzzle.io', // 배포 환경
     ],
     credentials: true, // 쿠키 및 인증 헤더 포함 허용
   });
