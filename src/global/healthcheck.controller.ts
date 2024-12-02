@@ -24,6 +24,6 @@ export class HealthCheckController {
   @Get('env')
   getEnv() {
     const env = this.configService.get<string>('serverEnv');
-    return { env };
+    return env ;
   }
 }
