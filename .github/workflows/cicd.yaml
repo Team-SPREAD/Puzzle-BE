@@ -39,7 +39,6 @@ jobs:
       # 대상 IP를 설정
       - name: Set target IP (MAIN)
         run: |
-          set +e
           STATUS=$(curl -o /dev/null -w "%{http_code}" "https://${{ secrets.NGINX_EC2_DOMAIN }}/api/env")
           echo $STATUS
           if [ $STATUS = 200 ]; then
@@ -71,7 +70,6 @@ jobs:
           script: |
             cd server
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/puzzle:latest
-            sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml down
             sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up --build -d
 
 
@@ -85,7 +83,6 @@ jobs:
           script: |
             cd server
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/puzzle:latest
-            sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml down
             sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up --build -d
 
       - name: Check deploy server URL (MAIN)
