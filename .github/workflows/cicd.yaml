@@ -36,46 +36,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Set target environment
-        run: |
-          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.NGINX_EC2_DOMAIN }}/api/env")
-          if [ "$STATUS" -eq 200 ]; then
-            CURRENT_ENV=$(curl -s "http://${{ secrets.NGINX_EC2_DOMAIN }}/api/env")
-          else
-            CURRENT_ENV=green
-          fi
-          echo "CURRENT_ENV=$CURRENT_ENV" >> $GITHUB_ENV
-          if [ "$CURRENT_ENV" == "blue" ]; then
-            echo "PORT=3001" >> $GITHUB_ENV
-            echo "TARGET_ENV=green" >> $GITHUB_ENV
-          else
-            echo "PORT=3000" >> $GITHUB_ENV
-            echo "TARGET_ENV=blue" >> $GITHUB_ENV
-          fi
-
-      - name: SSH and deploy
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          username: ${{ secrets.USERNAME }}
-          host: ${{ secrets.HOST }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd server
-            docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_PASSWORD }}
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
-            docker-compose -f docker-compose-${{ env.TARGET_ENV }}.yml up -d
-            docker-compose -f docker-compose-${{ env.CURRENT_ENV }}.yml stop
-
-      - name: Update NGINX configuration
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          username: ${{ secrets.USERNAME }}
-          host: ${{ secrets.NGINX_HOST }}
-          key: ${{ secrets.NGINX_SSH_KEY }}
-          script: |
-            sudo sed -i "s/set \$service_url .*;/set \$service_url ${{ env.TARGET_ENV }};/g" /etc/nginx/conf.d/service-env.inc
-            sudo nginx -s reload
-
       - name: Set target IP (MAIN)
         run: |
           STATUS=$(curl -o /dev/null -w "%{http_code}" "https://${{ secrets.MAIN_NGINX_EC2_DOMAIN }}/api/env")
