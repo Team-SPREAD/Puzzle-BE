@@ -71,8 +71,8 @@ jobs:
           script: |
             cd server
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/puzzle:latest
-            sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up -d
-
+            sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml down
+            docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up --build -d
 
 
       - name: Docker compose (MAIN) - Secondary Host
@@ -85,7 +85,8 @@ jobs:
           script: |
             cd server
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/puzzle:latest
-            sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up -d
+            sudo docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml down
+            docker-compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml up --build -d
 
       - name: Check deploy server URL (MAIN)
         uses: jtalk/url-health-check-action@v3
